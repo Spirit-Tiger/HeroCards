@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 179e2e9eaeee8bd46928f56873c30ebb, type: 3}
+  m_Name: Alice
+  m_EditorClassIdentifier: 
+  Name: Alice
+  ManaCost: 5
+  race: 0
+  Affiliations:
+  - 
+  Description: 
+  Type: 0
+  Class: 0
+  Hp: 8
+  Damage: 6
+  Speed: 2
+  Range: 3
+  ActionPoints: 3
+  PassiveDescription: 'Skilled Shooter: Don''t receive counter attacks;'
+  ActiveDescription: 'Penetration: Damage all units on attack direction; Concealment:
+    Can''t be targeted;'
+  Initiative: 4
+  Mp: 8
