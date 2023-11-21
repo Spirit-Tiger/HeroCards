@@ -14,3 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerDeck:
   - {fileID: 4161462161422808358, guid: 0de121c1cbd11ae46ab26e45c12165c5, type: 3}
+  - {fileID: 2816805465442606006, guid: 2610c32d9f294714b84e8d69a19877bd, type: 3}
+  - {fileID: 2816805465442606006, guid: 064d966002a2c3544a1fb3b362a16f0a, type: 3}
+  - {fileID: 2849991316443353481, guid: 3ec8da5ca59e70849addfc8ad669bc33, type: 3}
+  - {fileID: 2816805465442606006, guid: 064d966002a2c3544a1fb3b362a16f0a, type: 3}
+  - {fileID: 2816805465442606006, guid: 903cb9ea653284e43ab15a07dc9eeff2, type: 3}
+  - {fileID: 4161462161422808358, guid: 0de121c1cbd11ae46ab26e45c12165c5, type: 3}
+  - {fileID: 4161462161422808358, guid: 0de121c1cbd11ae46ab26e45c12165c5, type: 3}
+  - {fileID: 4161462161422808358, guid: 0de121c1cbd11ae46ab26e45c12165c5, type: 3}

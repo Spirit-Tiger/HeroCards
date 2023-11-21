@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 179e2e9eaeee8bd46928f56873c30ebb, type: 3}
+  m_Name: Wise Cat
+  m_EditorClassIdentifier: 
+  UnitId: 8
+  Name: Wise Cat
+  ManaCost: 3
+  race: 0
+  Affiliations: []
+  Description: 
+  Type: 0
+  Class: 0
+  Hp: 7
+  Damage: 4
+  Speed: 2
+  Range: 1
+  ActionPoints: 3
+  PassiveDescription: 
+  ActiveDescription: 
+  Initiative: 4
+  Mp: 2

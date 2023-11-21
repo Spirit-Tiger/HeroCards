@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,16 +12,22 @@ public class BattleManager : NetworkBehaviour
     public GameObject ServerPrefab;
     public GameObject ClientPrefab;
 
+    public GameObject currentUnit;
+
     public bool IsDragging = false;
     public bool PlaceMode = false;
     public int PlayerId;
     public DeckSO DeckData;
     public DeckSO DeckData2;
     public List<GameObject> Deck;
-    public List<GameObject> Hand = new List<GameObject>();
-    public List<GameObject> HandBacks = new List<GameObject>();
-    public List<GameObject> Hand2 = new List<GameObject>();
-    public List<GameObject> HandBacks2 = new List<GameObject>();
+
+    public NetworkVariable<int> CurrentManaPlayer1 = new NetworkVariable<int>(3, NetworkVariableReadPermission.Everyone,NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> MaxManaPlayer1 = new NetworkVariable<int>(3);
+    public NetworkVariable<int> CurrentManaPlayer2 = new NetworkVariable<int>(3);
+    public NetworkVariable<int> MaxManaPlayer2 = new NetworkVariable<int>(3);
+
+    public static event Action<bool> OnDragStateChanged;
+    public static event Action<bool> OnPlaceModeStateChanged;
 
     private void Awake()
     {
@@ -52,6 +59,11 @@ public class BattleManager : NetworkBehaviour
     {
         PlayerId = (int)clientId;
 
+        /*if (PlayerId == 0)
+        {
+            Deck = DeckData.playerDeck;
+        }*/
+
         if (PlayerId == 1)
         {
             Deck = DeckData.playerDeck;
@@ -61,21 +73,12 @@ public class BattleManager : NetworkBehaviour
             Deck = DeckData2.playerDeck;
         }
 
-        if (!IsServer)
-        {
-            Instantiate(ClientPrefab);
-        }
+        /*        if (!IsServer)
+                {
+                    Instantiate(ClientPrefab);
+                }*/
+        FieldManager.Instance.EmptyCellsServerRpc();
     }
-
-    private void Update()
-    {
-       
-    }
-
-
-
-    public static event Action<bool> OnDragStateChanged;
-    public static event Action<bool> OnPlaceModeStateChanged;
 
     public void ChangeDragState(bool dragState)
     {
@@ -87,5 +90,107 @@ public class BattleManager : NetworkBehaviour
     {
         PlaceMode = placeModeState;
         OnPlaceModeStateChanged?.Invoke(placeModeState);
+    }
+
+    [ClientRpc]
+    public void SetClientCanActClientRpc()
+    {
+        ClientManager.Instance.SetClientCanAct(true);
+    }
+
+    [ClientRpc]
+    public void DrawCardsClientRpc()
+    {
+        ClientManager.Instance.DrawCards();
+    }
+
+    [ClientRpc]
+    public void TurnsClientRpc(int playerId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == (ulong)playerId)
+        {
+            ClientManager.Instance.SetClientCanAct(true);
+            UIManager.Instance.TurnText.text = "Your Turn";
+            UIManager.Instance.TurnText.gameObject.SetActive(true);
+
+            SetManaServerRpc();
+            StartCoroutine(DisableText());
+
+        }
+        if (NetworkManager.Singleton.LocalClientId != (ulong)playerId)
+        {
+            UIManager.Instance.TurnText.text = "Enemy Turn";
+            UIManager.Instance.TurnText.gameObject.SetActive(true);
+            ClientManager.Instance.SetClientCanAct(false);
+            StartCoroutine(DisableText());
+        }
+    }
+
+    private IEnumerator DisableText()
+    {
+        yield return new WaitForSeconds(2);
+        UIManager.Instance.TurnText.gameObject.SetActive(false);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetManaServerRpc()
+    {
+        if (Server.Instance.State == GameState.FirstPlayerTurn)
+        {
+            MaxManaPlayer1.Value++;
+            CurrentManaPlayer1.Value = MaxManaPlayer1.Value;
+            Debug.Log(CurrentManaPlayer1.Value + "  " + MaxManaPlayer1.Value);
+        }
+        if (Server.Instance.State == GameState.SecondPlayerTurn)
+        {
+            MaxManaPlayer2.Value++;
+            CurrentManaPlayer2.Value = MaxManaPlayer2.Value;
+            Debug.Log(CurrentManaPlayer2.Value + "  " + MaxManaPlayer2.Value);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void UseManaServerRpc(int manaCost)
+    {
+        if (Server.Instance.State == GameState.FirstPlayerTurn)
+        {
+            CurrentManaPlayer1.Value += manaCost;
+           
+        }
+        if (Server.Instance.State == GameState.SecondPlayerTurn)
+        {
+            CurrentManaPlayer2.Value += manaCost;
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ChangeTurnServerRpc()
+    {
+        if (Server.Instance.State == GameState.FirstPlayerTurn)
+        {
+            SecondPlayerTurnState();
+            SetGameStateClientRpc(GameState.SecondPlayerTurn);
+        }
+        else if (Server.Instance.State == GameState.SecondPlayerTurn)
+        {
+            FirstPlayerTurnState();
+            SetGameStateClientRpc(GameState.FirstPlayerTurn);
+        }
+    }
+
+    [ClientRpc]
+    public void SetGameStateClientRpc(GameState gameState)
+    {
+        ClientManager.Instance.State = gameState;
+    }
+
+    private void SecondPlayerTurnState()
+    {
+        Server.Instance.ChangeGameState(GameState.SecondPlayerTurn);
+    }
+
+    private void FirstPlayerTurnState()
+    {
+        Server.Instance.ChangeGameState(GameState.FirstPlayerTurn);
     }
 }

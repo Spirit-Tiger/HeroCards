@@ -24,7 +24,7 @@ public class UnitCard : CardSO
     public int Damage;
     public int Speed;
     public int Range;
-    public int ActionPoints;
+    public int ActionPoints = 1;
     public string PassiveDescription;
     public string ActiveDescription;
 }

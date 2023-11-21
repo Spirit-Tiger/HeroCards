@@ -1,10 +1,8 @@
-using System.Collections;
+
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.VisualScripting;
-using UnityEditor.PackageManager;
 using UnityEngine;
-using static CardSO;
+
 
 public class CardManager : NetworkBehaviour
 {
@@ -14,12 +12,13 @@ public class CardManager : NetworkBehaviour
     public GameObject CardDestroyed;
 
     public GameObject CardPrefab;
-    public GameObject NonPrefab;
-    public GameObject CardBackPrefab;
-    public GameObject HandField;
-    public GameObject HandForOpponent;
+    public GameObject HandFieldPlayer1;
+    public GameObject HandFieldPlayer2;
     public List<GameObject> HandCards;
     public List<GameObject> HandCards2;
+
+    private int _startCardCount = 4;
+    public int CardIdCounter = 0;
 
     private void Awake()
     {
@@ -33,16 +32,24 @@ public class CardManager : NetworkBehaviour
             Instance = this;
         }
 
-        HandField = GameObject.Find("HandField");
-        HandForOpponent = GameObject.Find("HandForOpponent");
+        HandFieldPlayer1 = GameObject.Find("HandFieldPlayer1");
+        HandFieldPlayer2 = GameObject.Find("HandFieldPlayer2");
     }
 
     public void PlaceCards(int clientId)
     {
+        if (clientId == 1)
+        {
+            HandFieldPlayer2.SetActive(false);
+        }
+        if (clientId == 2)
+        {
+            HandFieldPlayer1.SetActive(false);
+        }
+
         if (clientId == (int)NetworkManager.Singleton.LocalClientId)
         {
             SpawnCardsServerRpc(NetworkManager.Singleton.LocalClientId);
-            SpawnCardsBacksServerRpc(NetworkManager.Singleton.LocalClientId);
         }
     }
 
@@ -51,81 +58,48 @@ public class CardManager : NetworkBehaviour
     {
         if (IsServer)
         {
+            float counter = 0;
             ClientDataSO clientData = Server.Instance.GetClientData((int)clientId);
             clientData.ClientHand.Clear();
-            for (int i = 0; i < clientData.ClientDeck.Count; i++)
+            Transform field = null;
+
+            if (clientId == 1)
             {
-                GameObject card = Instantiate(CardPrefab, HandField.transform.position, Quaternion.identity);
+                field = HandFieldPlayer1.transform;
+            }
+            else if (clientId == 2)
+            {
+                field = HandFieldPlayer2.transform;
+            }
 
+
+            for (int i = 0; i < _startCardCount; i++)
+            {
+
+                GameObject card = Instantiate(clientData.ClientDeck[0], field.position, Quaternion.identity);
+                clientData.ClientDeck.RemoveAt(0);
+                RectTransform cardRect = card.GetComponent<RectTransform>();
                 card.GetComponent<NetworkObject>().Spawn();
-                card.transform.SetParent(HandField.transform);
-                card.GetComponent<Card>().CardId.Value = i;
-
+                card.transform.SetParent(field);
+                card.GetComponent<Card>().CardId.Value = CardIdCounter++;
+                card.GetComponent<Card>().OwnerId.Value = (int)clientId;
                 clientData.ClientHand.Add(card);
-                card.GetComponent<NetworkObject>().ChangeOwnership(clientId);
 
-                SpawnCardsClientRpc(clientId);
-            }
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void SpawnCardsBacksServerRpc(ulong clientId)
-    {
-        if (IsServer)
-        {
-            ClientDataSO clientData = Server.Instance.GetClientData((int)clientId);
-            clientData.ClientHandBacks.Clear();
-            for (int i = 0; i < clientData.ClientDeck.Count; i++)
-            {
-                GameObject card = Instantiate(CardBackPrefab, HandForOpponent.transform.position, Quaternion.identity);
-                card.GetComponent<NetworkObject>().Spawn();
-                card.transform.SetParent(HandForOpponent.transform);
-                card.GetComponent<Card>().CardId.Value = i;
-                card.GetComponent<RectTransform>().localScale = new Vector3(0.35f, 0.35f, 0.35f);
-
-                clientData.ClientHandBacks.Add(card);
-                card.GetComponent<NetworkObject>().ChangeOwnership(clientId);
-
-                SpawnCardsBacksClientRpc(clientId);
-            }
-        }
-    }
-
-
-    [ClientRpc]
-    public void SpawnCardsClientRpc(ulong clientId)
-    {
-
-        for (int i = 0; i < HandField.transform.childCount; i++)
-        {
-            Transform childTransform = HandField.transform.GetChild(i);
-
-            if (NetworkManager.Singleton.LocalClientId != childTransform.GetComponent<NetworkObject>().OwnerClientId)
-            {
-                childTransform.gameObject.SetActive(false);
-            }
-        }
-
-    }
-
-    [ClientRpc]
-    public void SpawnCardsBacksClientRpc(ulong clientId)
-    {
-        float counter = 0;
-        for (int i = 0; i < HandForOpponent.transform.childCount; i++)
-        {
-            Transform childTransform = HandForOpponent.transform.GetChild(i);
-
-            if (NetworkManager.Singleton.LocalClientId == childTransform.GetComponent<NetworkObject>().OwnerClientId)
-            {
-                RectTransform childRect = childTransform.GetComponent<RectTransform>();
-                childRect.localScale = new Vector3(0.35f, 0.35f, 0.35f);
-                float xPos = counter + (childRect.rect.width * .35f);
-                childRect.localPosition = new Vector3(xPos, childRect.localPosition.y, childRect.localPosition.z);
+                float xPos = counter + (cardRect.rect.width * .6f);
+                cardRect.localPosition = new Vector3(xPos - field.GetComponent<RectTransform>().rect.width * .4f, cardRect.localPosition.y, cardRect.localPosition.z);
                 counter = xPos;
-                childTransform.gameObject.SetActive(false);
             }
         }
+    }
+
+    public void SortHand(List<GameObject> hand)
+    {
+        for (int j = 0; j < hand.Count; j++)
+        {
+            RectTransform objectRect = hand[j].GetComponent<RectTransform>();
+            float positionX = (objectRect.rect.width * .6f * (j + 1) - HandFieldPlayer1.transform.GetComponent<RectTransform>().rect.width * .4f) ;
+            objectRect.localPosition = new Vector3(positionX , objectRect.localPosition.y, objectRect.localPosition.z); 
+        }
+
     }
 }

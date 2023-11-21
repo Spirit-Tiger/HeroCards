@@ -5,6 +5,7 @@ using UnityEngine;
 
 public abstract class CardSO : ScriptableObject
 {
+    public int UnitId;
     public string Name;
     public int ManaCost;
     public enum CardRace
